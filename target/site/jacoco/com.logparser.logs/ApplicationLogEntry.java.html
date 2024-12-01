@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApplicationLogEntry.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">LogParserApp</a> &gt; <a href="index.source.html" class="el_package">com.logparser.logs</a> &gt; <span class="el_source">ApplicationLogEntry.java</span></div><h1>ApplicationLogEntry.java</h1><pre class="source lang-java linenums">package com.logparser.logs;
+
+import java.time.LocalDateTime;
+
+public class ApplicationLogEntry implements LogEntry {
+    private LocalDateTime timestamp; // Log timestamp
+    private String level;            // Log level (e.g., INFO, ERROR, WARNING, DEBUG)
+    private String message;          // Log message content
+    private String host;             // Hostname where the log originated
+
+    // Constructor
+<span class="fc" id="L12">    public ApplicationLogEntry(LocalDateTime timestamp, String level, String message, String host) {</span>
+<span class="fc" id="L13">        this.timestamp = timestamp;</span>
+<span class="fc" id="L14">        this.level = level;</span>
+<span class="fc" id="L15">        this.message = message;</span>
+<span class="fc" id="L16">        this.host = host;</span>
+<span class="fc" id="L17">    }</span>
+
+    // Getters
+    @Override
+    public LocalDateTime getTimestamp() {
+<span class="fc" id="L22">        return timestamp;</span>
+    }
+
+    public String getLevel() {
+<span class="fc" id="L26">        return level;</span>
+    }
+
+    public String getMessage() {
+<span class="fc" id="L30">        return message;</span>
+    }
+
+    @Override
+    public String getHost() {
+<span class="fc" id="L35">        return host;</span>
+    }
+
+    // Override toString for better debugging and logging
+    @Override
+    public String toString() {
+<span class="fc" id="L41">        return &quot;ApplicationLogEntry{&quot; +</span>
+                &quot;timestamp=&quot; + timestamp +
+                &quot;, level='&quot; + level + '\'' +
+                &quot;, message='&quot; + message + '\'' +
+                &quot;, host='&quot; + host + '\'' +
+                '}';
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

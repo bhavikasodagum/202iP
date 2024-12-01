@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>App.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">LogParserApp</a> &gt; <a href="index.source.html" class="el_package">com.logparser</a> &gt; <span class="el_source">App.java</span></div><h1>App.java</h1><pre class="source lang-java linenums">package com.logparser;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.logparser.logs.*;
+import com.logparser.parsers.*;
+
+import java.io.*;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.*;
+import java.util.stream.Collectors;
+
+<span class="nc" id="L15">public class App {</span>
+    // Variables to track skipped lines and file write errors
+<span class="fc" id="L17">    private static int skippedLines = 0;</span>
+<span class="fc" id="L18">    private static int writeErrors = 0;</span>
+
+    public static void main(String[] args) {
+<span class="pc bpc" id="L21" title="1 of 4 branches missed.">        if (args.length != 2 || !args[0].equals(&quot;--file&quot;)) {</span>
+<span class="fc" id="L22">            System.out.println(&quot;Usage: java -jar LogParserApp.jar --file &lt;logfile&gt;&quot;);</span>
+<span class="fc" id="L23">            return;</span>
+        }
+    
+<span class="fc" id="L26">        String logFileName = args[1];</span>
+    
+        // Log Parsers
+<span class="fc" id="L29">        List&lt;LogParser&gt; parsers = Arrays.asList(</span>
+                new APMLogParser(),
+                new ApplicationLogParser(),
+                new RequestLogParser()
+        );
+    
+        // Aggregation data structures
+<span class="fc" id="L36">        List&lt;APMLogEntry&gt; apmLogs = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L37">        List&lt;ApplicationLogEntry&gt; applicationLogs = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L38">        List&lt;RequestLogEntry&gt; requestLogs = new ArrayList&lt;&gt;();</span>
+    
+        // Process log file
+<span class="fc" id="L41">        try (BufferedReader reader = new BufferedReader(new FileReader(logFileName))) {</span>
+            String line;
+<span class="fc bfc" id="L43" title="All 2 branches covered.">            while ((line = reader.readLine()) != null) {</span>
+<span class="fc" id="L44">                boolean parsed = false;</span>
+<span class="fc bfc" id="L45" title="All 2 branches covered.">                for (LogParser parser : parsers) {</span>
+<span class="fc" id="L46">                    LogEntry entry = parser.parse(line);</span>
+<span class="fc bfc" id="L47" title="All 2 branches covered.">                    if (entry != null) {</span>
+<span class="fc bfc" id="L48" title="All 2 branches covered.">                        if (entry instanceof APMLogEntry) {</span>
+<span class="fc" id="L49">                            apmLogs.add((APMLogEntry) entry);</span>
+<span class="fc bfc" id="L50" title="All 2 branches covered.">                        } else if (entry instanceof ApplicationLogEntry) {</span>
+<span class="fc" id="L51">                            applicationLogs.add((ApplicationLogEntry) entry);</span>
+<span class="pc bpc" id="L52" title="1 of 2 branches missed.">                        } else if (entry instanceof RequestLogEntry) {</span>
+<span class="fc" id="L53">                            requestLogs.add((RequestLogEntry) entry);</span>
+                        }
+<span class="fc" id="L55">                        parsed = true;</span>
+<span class="fc" id="L56">                        break; // Move to next log line</span>
+                    }
+<span class="fc" id="L58">                }</span>
+<span class="fc bfc" id="L59" title="All 2 branches covered.">                if (!parsed) {</span>
+<span class="fc" id="L60">                    System.err.println(&quot;Skipped invalid log line: &quot; + line);</span>
+<span class="fc" id="L61">                    skippedLines++; // Increment skipped line count</span>
+                }
+<span class="fc" id="L63">            }</span>
+<span class="fc" id="L64">        } catch (IOException e) {</span>
+<span class="fc" id="L65">            System.err.println(&quot;Error reading log file: &quot; + e.getMessage());</span>
+<span class="fc" id="L66">            return;</span>
+<span class="fc" id="L67">        }</span>
+    
+<span class="fc bfc" id="L69" title="All 2 branches covered.">        if (!apmLogs.isEmpty()) {</span>
+<span class="fc" id="L70">            writeAggregatedAPMLogs(apmLogs, &quot;apm.json&quot;);</span>
+        } else {
+<span class="fc" id="L72">            createEmptyFile(&quot;apm.json&quot;);</span>
+        }
+        
+<span class="fc bfc" id="L75" title="All 2 branches covered.">        if (!applicationLogs.isEmpty()) {</span>
+<span class="fc" id="L76">            writeAggregatedApplicationLogs(applicationLogs, &quot;application.json&quot;);</span>
+        } else {
+<span class="fc" id="L78">            createEmptyFile(&quot;application.json&quot;);</span>
+        }
+        
+<span class="fc bfc" id="L81" title="All 2 branches covered.">        if (!requestLogs.isEmpty()) {</span>
+<span class="fc" id="L82">            writeAggregatedRequestLogs(requestLogs, &quot;request.json&quot;);</span>
+        } else {
+<span class="fc" id="L84">            createEmptyFile(&quot;request.json&quot;);</span>
+        }
+        
+    
+        // Print summary report
+<span class="fc" id="L89">        System.out.println(&quot;Summary Report:&quot;);</span>
+<span class="fc" id="L90">        System.out.println(&quot;Total skipped log lines: &quot; + skippedLines);</span>
+<span class="fc" id="L91">        System.out.println(&quot;Total file write errors: &quot; + writeErrors);</span>
+<span class="fc" id="L92">    }</span>
+    
+    public static void createEmptyFile(String fileName) {
+<span class="fc" id="L95">        try (FileWriter writer = new FileWriter(fileName)) {</span>
+            // Write nothing, just create an empty file
+<span class="pc" id="L97">        } catch (IOException e) {</span>
+<span class="nc" id="L98">            System.err.println(&quot;Error creating empty file: &quot; + fileName + &quot; - &quot; + e.getMessage());</span>
+<span class="nc" id="L99">            writeErrors++;</span>
+<span class="fc" id="L100">        }</span>
+<span class="fc" id="L101">    }</span>
+    
+    /**
+     * Aggregates and writes APM logs to JSON.
+     */
+    public static void writeAggregatedAPMLogs(List&lt;APMLogEntry&gt; apmLogs, String fileName) {
+        //if (apmLogs.isEmpty()) return;
+<span class="fc bfc" id="L108" title="All 2 branches covered.">        if (apmLogs.isEmpty()) {</span>
+<span class="fc" id="L109">            System.out.println(&quot;No APM logs to write.&quot;);</span>
+<span class="fc" id="L110">            return;</span>
+        }
+<span class="fc" id="L112">        Map&lt;String, Map&lt;String, Object&gt;&gt; apmAggregations = apmLogs.stream()</span>
+<span class="fc" id="L113">                .collect(Collectors.groupingBy(</span>
+                        APMLogEntry::getMetric,
+<span class="fc" id="L115">                        Collectors.collectingAndThen(</span>
+<span class="fc" id="L116">                                Collectors.toList(),</span>
+                                logs -&gt; {
+<span class="fc" id="L118">                                    List&lt;Double&gt; values = logs.stream()</span>
+<span class="fc" id="L119">                                            .map(APMLogEntry::getValue)</span>
+<span class="fc" id="L120">                                            .sorted()</span>
+<span class="fc" id="L121">                                            .collect(Collectors.toList());</span>
+
+<span class="fc" id="L123">                                    Map&lt;String, Object&gt; stats = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L124">                                    stats.put(&quot;minimum&quot;, formatNumber(values.get(0)));</span>
+<span class="fc" id="L125">                                    stats.put(&quot;median&quot;, formatToOneDecimal(calculatePercentile(values, 50)));</span>
+<span class="fc" id="L126">                                    stats.put(&quot;average&quot;, formatToOneDecimal(values.stream().mapToDouble(v -&gt; v).average().orElse(0.0)));</span>
+<span class="fc" id="L127">                                    stats.put(&quot;max&quot;, formatNumber(values.get(values.size() - 1)));</span>
+
+<span class="fc" id="L129">                                    return stats;</span>
+                                }
+                        )
+                ));
+
+<span class="fc" id="L134">        writeToJson(apmAggregations, fileName);</span>
+<span class="fc" id="L135">    }</span>
+
+    /**
+     * Aggregates and writes Application logs to JSON.
+     */
+    public static void writeAggregatedApplicationLogs(List&lt;ApplicationLogEntry&gt; applicationLogs, String fileName) {
+        //if (applicationLogs.isEmpty()) return;
+<span class="fc bfc" id="L142" title="All 2 branches covered.">        if (applicationLogs.isEmpty()) {</span>
+<span class="fc" id="L143">            System.out.println(&quot;No Application logs to write.&quot;);</span>
+<span class="fc" id="L144">            return;</span>
+        }
+
+<span class="fc" id="L147">        Map&lt;String, Long&gt; severityCounts = applicationLogs.stream()</span>
+<span class="fc" id="L148">                .collect(Collectors.groupingBy(ApplicationLogEntry::getLevel, Collectors.counting()));</span>
+
+<span class="fc" id="L150">        writeToJson(severityCounts, fileName);</span>
+<span class="fc" id="L151">    }</span>
+
+    /**
+     * Aggregates and writes Request logs to JSON.
+     */
+    public static void writeAggregatedRequestLogs(List&lt;RequestLogEntry&gt; requestLogs, String fileName) {
+       // if (requestLogs.isEmpty()) return;
+<span class="fc bfc" id="L158" title="All 2 branches covered.">        if (requestLogs.isEmpty()) {</span>
+<span class="fc" id="L159">            System.out.println(&quot;No Request logs to write.&quot;);</span>
+<span class="fc" id="L160">            return;</span>
+        }
+<span class="fc" id="L162">        Map&lt;String, Map&lt;String, Object&gt;&gt; requestAggregations = requestLogs.stream()</span>
+<span class="fc" id="L163">                .collect(Collectors.groupingBy(</span>
+                        RequestLogEntry::getRequestUrl,
+<span class="fc" id="L165">                        Collectors.collectingAndThen(</span>
+<span class="fc" id="L166">                                Collectors.toList(),</span>
+                                logs -&gt; {
+<span class="fc" id="L168">                                    List&lt;Integer&gt; responseTimes = logs.stream()</span>
+<span class="fc" id="L169">                                            .map(RequestLogEntry::getResponseTimeMs)</span>
+<span class="fc" id="L170">                                            .sorted()</span>
+<span class="fc" id="L171">                                            .collect(Collectors.toList());</span>
+
+<span class="fc" id="L173">                                    Map&lt;String, Object&gt; responseTimeStats = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L174">                                    responseTimeStats.put(&quot;min&quot;, formatNumber(responseTimes.get(0)));</span>
+<span class="fc" id="L175">                                    responseTimeStats.put(&quot;50_percentile&quot;, formatToOneDecimal(calculatePercentile(responseTimes, 50)));</span>
+<span class="fc" id="L176">                                    responseTimeStats.put(&quot;90_percentile&quot;, formatToOneDecimal(calculatePercentile(responseTimes, 90)));</span>
+<span class="fc" id="L177">                                    responseTimeStats.put(&quot;95_percentile&quot;, formatToOneDecimal(calculatePercentile(responseTimes, 95)));</span>
+<span class="fc" id="L178">                                    responseTimeStats.put(&quot;99_percentile&quot;, calculatePercentile(responseTimes, 99));</span>
+<span class="fc" id="L179">                                    responseTimeStats.put(&quot;max&quot;, formatNumber(responseTimes.get(responseTimes.size() - 1)));</span>
+
+<span class="fc" id="L181">                                    Map&lt;String, Long&gt; statusCodeCounts = logs.stream()</span>
+<span class="fc" id="L182">                                            .collect(Collectors.groupingBy(</span>
+<span class="fc" id="L183">                                                    log -&gt; log.getResponseStatus() / 100 + &quot;XX&quot;,</span>
+<span class="fc" id="L184">                                                    Collectors.counting()</span>
+                                            ));
+
+                                    // Ensure all status codes (2XX, 4XX, 5XX) are present
+<span class="fc" id="L188">                                    statusCodeCounts.putIfAbsent(&quot;2XX&quot;, 0L);</span>
+<span class="fc" id="L189">                                    statusCodeCounts.putIfAbsent(&quot;4XX&quot;, 0L);</span>
+<span class="fc" id="L190">                                    statusCodeCounts.putIfAbsent(&quot;5XX&quot;, 0L);</span>
+
+                                    // Add response times first, then status codes
+<span class="fc" id="L193">                                    Map&lt;String, Object&gt; result = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L194">                                    result.put(&quot;response_times&quot;, responseTimeStats);</span>
+<span class="fc" id="L195">                                    result.put(&quot;status_codes&quot;, statusCodeCounts);</span>
+
+<span class="fc" id="L197">                                    return result;</span>
+                                }
+                        )
+                ));
+
+<span class="fc" id="L202">        writeToJson(requestAggregations, fileName);</span>
+<span class="fc" id="L203">    }</span>
+
+    /**
+     * Calculates a specific percentile from a sorted list using a formula-based approach.
+     */
+    public static double calculatePercentile(List&lt;? extends Number&gt; sortedValues, double percentile) {
+<span class="fc" id="L209">        int n = sortedValues.size();</span>
+<span class="fc bfc" id="L210" title="All 2 branches covered.">        if (n == 0) return 0.0;</span>
+
+<span class="fc" id="L212">        double rank = (percentile / 100) * (n - 1) + 1;</span>
+<span class="fc" id="L213">        int lowerIndex = (int) Math.floor(rank) - 1;</span>
+<span class="fc" id="L214">        int upperIndex = Math.min(lowerIndex + 1, n - 1);</span>
+
+<span class="pc bpc" id="L216" title="1 of 2 branches missed.">        if (lowerIndex &lt; 0) return sortedValues.get(0).doubleValue();</span>
+<span class="fc bfc" id="L217" title="All 2 branches covered.">        if (lowerIndex == upperIndex) return sortedValues.get(lowerIndex).doubleValue();</span>
+
+<span class="fc" id="L219">        double lowerValue = sortedValues.get(lowerIndex).doubleValue();</span>
+<span class="fc" id="L220">        double upperValue = sortedValues.get(upperIndex).doubleValue();</span>
+<span class="fc" id="L221">        return lowerValue + (rank - Math.floor(rank)) * (upperValue - lowerValue);</span>
+    }
+
+    /**
+     * Formats a number to one decimal place.
+     */
+    public static double formatToOneDecimal(double value) {
+<span class="fc" id="L228">        BigDecimal roundedValue = BigDecimal.valueOf(value).setScale(1, RoundingMode.HALF_UP);</span>
+<span class="fc" id="L229">        return roundedValue.doubleValue();</span>
+    }
+
+    /**
+     * Rounds a number and formats it as an integer or double based on its value.
+     */
+    public static Object formatNumber(double value) {
+<span class="fc bfc" id="L236" title="All 2 branches covered.">        if (value == (long) value) {</span>
+<span class="fc" id="L237">            return (long) value; // Return as integer if no decimal part</span>
+        } else {
+<span class="fc" id="L239">            BigDecimal roundedValue = BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_UP);</span>
+<span class="fc" id="L240">            return roundedValue.doubleValue(); // Return rounded double with two decimal places</span>
+        }
+    }
+
+    /**
+     * Writes any object to JSON using Jackson.
+     */
+    public static void writeToJson(Object data, String fileName) {
+<span class="fc" id="L248">        ObjectMapper mapper = new ObjectMapper();</span>
+<span class="fc" id="L249">        mapper.registerModule(new JavaTimeModule());</span>
+<span class="fc" id="L250">        mapper.enable(SerializationFeature.INDENT_OUTPUT);</span>
+
+        try {
+<span class="fc" id="L253">            mapper.writeValue(new File(fileName), data);</span>
+<span class="fc" id="L254">            System.out.println(&quot;Logs written to &quot; + fileName);</span>
+<span class="fc" id="L255">        } catch (IOException e) {</span>
+<span class="fc" id="L256">            System.err.println(&quot;Error writing to file &quot; + fileName + &quot;: &quot; + e.getMessage());</span>
+<span class="fc" id="L257">            writeErrors++; // Increment write error count</span>
+<span class="fc" id="L258">        }</span>
+<span class="fc" id="L259">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

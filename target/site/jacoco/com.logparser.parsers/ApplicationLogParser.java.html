@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApplicationLogParser.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">LogParserApp</a> &gt; <a href="index.source.html" class="el_package">com.logparser.parsers</a> &gt; <span class="el_source">ApplicationLogParser.java</span></div><h1>ApplicationLogParser.java</h1><pre class="source lang-java linenums">package com.logparser.parsers;
+
+import com.logparser.logs.ApplicationLogEntry;
+import com.logparser.logs.LogEntry;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+<span class="fc" id="L9">public class ApplicationLogParser implements LogParser {</span>
+<span class="fc" id="L10">    private static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ISO_DATE_TIME;</span>
+
+    @Override
+    public LogEntry parse(String logLine) {
+<span class="fc bfc" id="L14" title="All 2 branches covered.">        if (logLine.contains(&quot;level=&quot;)) {</span>
+            try {
+<span class="fc" id="L16">                String[] parts = logLine.split(&quot; &quot;);</span>
+
+                // Parse required fields
+<span class="fc" id="L19">                LocalDateTime timestamp = extractTimestamp(parts[0]);</span>
+<span class="fc" id="L20">                String level = extractValue(parts, &quot;level&quot;);</span>
+<span class="fc" id="L21">                String message = extractMessage(logLine);</span>
+<span class="fc" id="L22">                String host = extractValue(parts, &quot;host&quot;);</span>
+
+<span class="fc" id="L24">                return new ApplicationLogEntry(timestamp, level, message, host);</span>
+<span class="fc" id="L25">            } catch (IllegalArgumentException e) {</span>
+<span class="fc" id="L26">                throw e; // Re-throw expected exceptions</span>
+<span class="nc" id="L27">            } catch (Exception e) {</span>
+<span class="nc" id="L28">                throw new IllegalArgumentException(&quot;Failed to parse Application log line: &quot; + logLine, e);</span>
+            }
+        }
+<span class="fc" id="L31">        return null;</span>
+    }
+
+   /*  private LocalDateTime extractTimestamp(String part) {
+        try {
+            return LocalDateTime.parse(part.split(&quot;=&quot;)[1], TIMESTAMP_FORMATTER);
+        } catch (Exception e) {
+            throw new IllegalArgumentException(&quot;Invalid timestamp format.&quot;);
+        }
+    } */
+    private LocalDateTime extractTimestamp(String part) {
+        try {
+<span class="fc" id="L43">            return LocalDateTime.parse(part.split(&quot;=&quot;)[1], TIMESTAMP_FORMATTER);</span>
+<span class="fc" id="L44">        } catch (Exception e) {</span>
+<span class="fc" id="L45">            throw new IllegalArgumentException(e.getMessage(), e); // Propagate the original exception message</span>
+        }
+    }
+    
+
+    private String extractValue(String[] parts, String key) {
+<span class="fc bfc" id="L51" title="All 2 branches covered.">        for (String part : parts) {</span>
+<span class="fc bfc" id="L52" title="All 2 branches covered.">            if (part.startsWith(key + &quot;=&quot;)) {</span>
+<span class="fc" id="L53">                return part.split(&quot;=&quot;)[1];</span>
+            }
+        }
+<span class="fc" id="L56">        throw new IllegalArgumentException(&quot;Missing key: &quot; + key);</span>
+    }
+
+    private String extractMessage(String logLine) {
+<span class="fc" id="L60">        int messageIndex = logLine.indexOf(&quot;message=&quot;);</span>
+<span class="fc bfc" id="L61" title="All 2 branches covered.">        if (messageIndex != -1) {</span>
+            try {
+<span class="fc" id="L63">                return logLine.substring(messageIndex + 8).split(&quot; host=&quot;)[0].replace(&quot;\&quot;&quot;, &quot;&quot;).trim();</span>
+<span class="nc" id="L64">            } catch (Exception e) {</span>
+<span class="nc" id="L65">                throw new IllegalArgumentException(&quot;Invalid message format.&quot;);</span>
+            }
+        }
+<span class="fc" id="L68">        throw new IllegalArgumentException(&quot;Missing key: message&quot;);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

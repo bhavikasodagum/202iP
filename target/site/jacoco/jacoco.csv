@@ -1,0 +1,8 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+LogParserApp,com.logparser.logs,RequestLogEntry,0,89,0,2,0,17,0,9,0,8
+LogParserApp,com.logparser.logs,ApplicationLogEntry,0,60,0,0,0,11,0,6,0,6
+LogParserApp,com.logparser.logs,APMLogEntry,0,67,0,2,0,13,0,7,0,6
+LogParserApp,com.logparser.parsers,APMLogParser,14,159,0,8,2,27,0,10,0,6
+LogParserApp,com.logparser.parsers,ApplicationLogParser,20,134,0,8,4,23,0,10,0,6
+LogParserApp,com.logparser.parsers,RequestLogParser,7,161,1,7,0,24,1,7,0,4
+LogParserApp,com.logparser,App,29,608,3,35,3,133,4,30,1,14

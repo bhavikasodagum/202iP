@@ -1,0 +1,7 @@
+com/logparser/RequestLogEntryTest.class
+com/logparser/APMLogParserTest.class
+com/logparser/AppTest.class
+com/logparser/ApplicationLogParserTest.class
+com/logparser/RequestLogParserTest.class
+com/logparser/APMLogEntryTest.class
+com/logparser/ApplicationLogEntryTest.class

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>APMLogParser.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">LogParserApp</a> &gt; <a href="index.source.html" class="el_package">com.logparser.parsers</a> &gt; <span class="el_source">APMLogParser.java</span></div><h1>APMLogParser.java</h1><pre class="source lang-java linenums">package com.logparser.parsers;
+
+import com.logparser.logs.APMLogEntry;
+import com.logparser.logs.LogEntry;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+<span class="fc" id="L9">public class APMLogParser implements LogParser {</span>
+<span class="fc" id="L10">    private static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ISO_DATE_TIME;</span>
+
+    @Override
+    public LogEntry parse(String logLine) {
+        // Check if the log line contains &quot;metric=&quot; to identify an APM log
+<span class="fc bfc" id="L15" title="All 2 branches covered.">        if (logLine.contains(&quot;metric=&quot;)) {</span>
+            try {
+                // Split the log line into key-value pairs
+<span class="fc" id="L18">                String[] parts = logLine.split(&quot; &quot;);</span>
+
+                // Parse required fields
+<span class="fc" id="L21">                LocalDateTime timestamp = extractTimestamp(parts[0]);</span>
+<span class="fc" id="L22">                String metric = extractValue(parts, &quot;metric&quot;);</span>
+<span class="fc" id="L23">                double value = parseValue(extractValue(parts, &quot;value&quot;));</span>
+<span class="fc" id="L24">                String host = extractValue(parts, &quot;host&quot;);</span>
+
+                // Return a new APMLogEntry object
+<span class="fc" id="L27">                return new APMLogEntry(timestamp, metric, value, host);</span>
+<span class="fc" id="L28">            } catch (IllegalArgumentException e) {</span>
+                // Log the exception for debugging purposes
+<span class="fc" id="L30">                System.err.println(&quot;Error parsing log line: &quot; + e.getMessage());</span>
+<span class="fc" id="L31">                throw e;</span>
+<span class="nc" id="L32">            } catch (Exception e) {</span>
+                // If any other exception occurs, we throw it with a generic message
+<span class="nc" id="L34">                throw new IllegalArgumentException(&quot;Failed to parse log line: &quot; + logLine, e);</span>
+            }
+        }
+<span class="fc" id="L37">        return null; // Return null if the log line is not an APM log</span>
+    }
+
+    /**
+     * Extracts the timestamp from a key-value pair.
+     *
+     * @param part The key-value pair containing the timestamp.
+     * @return A LocalDateTime object representing the timestamp.
+     */
+    private LocalDateTime extractTimestamp(String part) {
+        try {
+<span class="fc" id="L48">            return LocalDateTime.parse(part.split(&quot;=&quot;)[1], TIMESTAMP_FORMATTER);</span>
+<span class="fc" id="L49">        } catch (Exception e) {</span>
+<span class="fc" id="L50">            throw new IllegalArgumentException(&quot;Invalid timestamp format.&quot;);</span>
+        }
+    }
+
+    /**
+     * Extracts the value for a given key from the log parts array.
+     *
+     * @param parts The array of key-value pairs.
+     * @param key   The key to search for.
+     * @return The value associated with the key.
+     * @throws IllegalArgumentException If the key is missing.
+     */
+    private String extractValue(String[] parts, String key) {
+<span class="fc bfc" id="L63" title="All 2 branches covered.">        for (String part : parts) {</span>
+<span class="fc bfc" id="L64" title="All 2 branches covered.">            if (part.startsWith(key + &quot;=&quot;)) {</span>
+<span class="fc" id="L65">                return part.split(&quot;=&quot;)[1];</span>
+            }
+        }
+        // Add logging here to confirm that we are hitting this code path
+<span class="fc" id="L69">        System.err.println(&quot;Key missing: &quot; + key);</span>
+<span class="fc" id="L70">        throw new IllegalArgumentException(&quot;Missing key: &quot; + key);  // This should match the test case</span>
+    }
+
+    /**
+     * Parses the value and checks if it's a valid number.
+     *
+     * @param value The value to parse.
+     * @return The parsed value as a double.
+     */
+    private double parseValue(String value) {
+        try {
+<span class="fc" id="L81">            double parsedValue = Double.parseDouble(value);</span>
+<span class="fc bfc" id="L82" title="All 2 branches covered.">            if (parsedValue &lt; 0) {</span>
+<span class="fc" id="L83">                throw new IllegalArgumentException(&quot;Metric value cannot be negative.&quot;);</span>
+            }
+<span class="fc" id="L85">            return parsedValue;</span>
+<span class="fc" id="L86">        } catch (NumberFormatException e) {</span>
+<span class="fc" id="L87">            throw new IllegalArgumentException(&quot;For input string: \&quot;&quot; + value + &quot;\&quot;&quot;);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>
